@@ -3,9 +3,21 @@
 // Adapted based on: https://github.com/risia/CUDA-SPICE-Circuit-Sim/tree/master/CUDA_SPICE_Circuit_Sim
 int parseNetlist(const char* filepath, Element* elementList, int & elementListLength)
 {
-    std::ifstream inFile(filepath);
-    int elementListCapacity=elementListLength;
+    
     elementListLength=0;
+
+    int numlines=20;
+    // std::ifstream inFileUnused(filepath);
+    // std::string unused;
+    // while ( std::getline(inFileUnused, unused) )
+    //     numlines++;
+    // printf("numlines:%d\n",numlines);
+    // inFileUnused.close();
+
+    elementList=new Element[numlines];
+
+
+    std::ifstream inFile(filepath);
 
     while (inFile)
 	{
@@ -15,27 +27,26 @@ int parseNetlist(const char* filepath, Element* elementList, int & elementListLe
 		// Skip comments and empty lines
 		if (line[0] == '*' || line[0] == '\0') continue;
 		if (line[0] == ';'||line[0]=='.') {
-			break;//it's a command
+            continue;
 		}
 		else
         {
             Element element;
             if(parseElement(line,element)!=0)
             {
+                printf("return unsuccessful\n");
                 return -1;
             }
             else
             {
-                if(elementListLength>=elementListCapacity)
-                {
-                    elementListCapacity*=2;
-                    elementList=(Element*)realloc(elementList,elementListCapacity*sizeof(element));
-                }
+                printf("Node1:%d,Node2:%d,value:%.3f\n",element.Node1,element.Node2,element.value);
                 elementList[elementListLength]= element;
                 elementListLength++;
             }
         }
 	}
+    inFile.close();
+    printf("return successful\n");
     return 0;
 
 }
@@ -75,7 +86,7 @@ int parseElement(char* line, Element& element)
                     break;
             }
         }
-        printf("Node1:%d,Node2:%d,conductance:%.3f\n",element.Node1,element.Node2,element.value);
+         
         //should have four tokens
         if(tokCount!=4)
         {
