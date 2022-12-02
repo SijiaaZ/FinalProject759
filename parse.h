@@ -1,10 +1,15 @@
+#ifndef parse_h
+#define parse_h
 #define MAX_CHAR 256
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+
+
+
 struct Element
 {
     char elementName;
@@ -15,10 +20,13 @@ struct Element
 
 typedef struct Element Element;
 // parseNetlist
-// elementList should be dynamically allocated using malloc, the malloc size can be any as long as it's positive and nonzero.
-// After calling this function, the elementList will be assigned values and elementListLength is the real total number of elements.
-// if success return 0
-int parseNetlist(const char* filepath, Element* elementList, int & elementListLength);
+// if failed, return NULL, if success return the element array address
+// the returned address need to be freed and deleted
+Element* parseNetlist(const char* filepath, int & elementListLength);
 //parseElement
 //if success return 0
 int parseElement(char* line, Element& element);
+
+#endif
+
+

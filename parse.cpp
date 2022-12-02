@@ -1,7 +1,7 @@
 #include "parse.h"
 
 // Adapted based on: https://github.com/risia/CUDA-SPICE-Circuit-Sim/tree/master/CUDA_SPICE_Circuit_Sim
-int parseNetlist(const char* filepath, Element* elementList, int & elementListLength)
+Element* parseNetlist(const char* filepath, int & elementListLength)
 {
     
     elementListLength=0;
@@ -14,7 +14,7 @@ int parseNetlist(const char* filepath, Element* elementList, int & elementListLe
     // printf("numlines:%d\n",numlines);
     // inFileUnused.close();
 
-    elementList=new Element[numlines];
+    Element* elementList=new Element[numlines];
 
 
     std::ifstream inFile(filepath);
@@ -34,8 +34,7 @@ int parseNetlist(const char* filepath, Element* elementList, int & elementListLe
             Element element;
             if(parseElement(line,element)!=0)
             {
-                printf("return unsuccessful\n");
-                return -1;
+                return NULL;
             }
             else
             {
@@ -45,9 +44,7 @@ int parseNetlist(const char* filepath, Element* elementList, int & elementListLe
             }
         }
 	}
-    inFile.close();
-    printf("return successful\n");
-    return 0;
+    return elementList;
 
 }
 

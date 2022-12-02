@@ -3,9 +3,8 @@
 int main(int argc, char *argv[])
 {
     int elementListLength=0;
-    Element* elementList=NULL;
-    int parseSuccess=parseNetlist("Draft1.txt", elementList,elementListLength);
-    printf("Success:%d\n",parseSuccess);
+    Element* elementList=parseNetlist("Draft1.txt", elementListLength);
+    printf("Success:%d\n",elementList==NULL);
     printf("element List Length:%d\n",elementListLength);
     for(int i=0;i<elementListLength;i++)
     {
@@ -30,7 +29,7 @@ int main(int argc, char *argv[])
         printf("%f ",currents[i]);
     }
     printf("\n");
-    if(elementListLength>0)
+    if(elementList)
         delete[] elementList;
     return 0;
 }
