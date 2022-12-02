@@ -15,7 +15,7 @@ int get_Matrix_Dim_from_nodes(Element* elementList,int elementListLength)
 
 //the input argument conductance matrix should be all zeros
 //the input argument currents column matrix should be all zeros
-void elementList_to_Matrix(Element* elementList,int elementListLength, std::vector<float>& conductance, std::vector<float>& currents, int matrix_dim)
+void elementList_to_augmented_Matrix(Element* elementList,int elementListLength, std::vector<float>& conductance, std::vector<float>& currents, int matrix_dim)
 {
 
     for(int i=0;i<elementListLength;i++)
@@ -32,12 +32,8 @@ void elementList_to_Matrix(Element* elementList,int elementListLength, std::vect
         }
         else if(elementList[i].elementName=='I')
         {
-            currents[elementList[i].Node1]+=elementList[i].value;
-            currents[elementList[i].Node2]-=elementList[i].value;
-            conductance[elementList[i].Node1*matrix_dim+elementList[i].Node1]+=(float)1;
-            conductance[elementList[i].Node2*matrix_dim+elementList[i].Node2]+=(float)1;
-            conductance[row*matrix_dim+col]=(float)(-1);
-            conductance[col*matrix_dim+row]=(float)(-1);
+            currents[elementList[i].Node1]-=elementList[i].value;
+            currents[elementList[i].Node2]+=elementList[i].value;//flowing in is positive
         }
     }
     // if the diagonal is zero, make it one
@@ -50,3 +46,20 @@ void elementList_to_Matrix(Element* elementList,int elementListLength, std::vect
     }
 }
 
+
+void augmented_Matrix_to_definite_matrix(int elementListLength, const std::vector<float> conductance, const std::vector<float> currents, std::vector<float>& conductance_definite, std::vector<float>& currents_definite, int augmented_matrix_dim)
+{
+    for(int i=1;i<augmented_matrix_dim;i++)
+    {
+        for(int j=1;j<augmented_matrix_dim;j++)
+        {
+            conductance_definite[(i-1)*(augmented_matrix_dim-1)+(j-1)]=conductance[i*augmented_matrix_dim+j];
+        }
+    }
+
+    for(int i=1;i<augmented_matrix_dim;i++)
+    {
+        currents_definite[i-1]=currents[i];
+    }
+
+}

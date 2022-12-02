@@ -3,6 +3,6 @@
 
 #include <vector>
 
-std::vector<float> gaussian_elimination(const std::vector<float> conductance, const int matrix_dim);
-
+void gaussian_elimination(std::vector<float>& conductance_echelon, std::vector<float>& currents_echelon,int matrix_dim);
+std::vector<float> back_substituition(const std::vector<float> conductance_echelon, std::vector<float>& currents_echelon,int matrix_dim);
 #endif
