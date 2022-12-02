@@ -9,22 +9,44 @@
 #include "cusolver_utils.h"
 
 #include "parse.h"
+#include "matrix_helper.h"
 
 
 int main(int argc, char *argv[]) {
 
-    int elementListLength=8;
-    Element* elementList = (Element*)malloc(elementListLength*sizeof(Element));
-    int parseSuccess=parseNetlist("Draft1.txt", elementList,elementListLength);
-    printf("Success:%d\n",parseSuccess);
+        int elementListLength=0;
+    Element* elementList=parseNetlist("Draft1.txt", elementListLength);
+    printf("Success:%d\n",elementList==NULL);
     printf("element List Length:%d\n",elementListLength);
+    for(int i=0;i<elementListLength;i++)
+    {
+        printf("Node1:%d,Node2:%d,value:%.3f\n",elementList[i].Node1,elementList[i].Node2,elementList[i].value);
+    }
+
+    int matrix_dim=get_Matrix_Dim_from_nodes(elementList,elementListLength);
+    printf("%d\n",matrix_dim);
+    std::vector<float> A(matrix_dim*matrix_dim);
+    std::vector<float> B(matrix_dim);
+    elementList_to_Matrix(elementList, elementListLength, A, B, matrix_dim);
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            printf("%f ",A[i*matrix_dim+j]);
+        }
+        printf("\n");
+    }
+    for(int i=0;i<matrix_dim;i++)
+    {
+        printf("%f\n",B[i]);
+    }
     
     cusolverDnHandle_t cusolverH = NULL;
     cudaStream_t stream = NULL;
 
     using data_type = float;
 
-    const int64_t m = 3;
+    const int64_t m = matrix_dim;
     const int64_t lda = m;
     const int64_t ldb = m;
 
@@ -39,8 +61,8 @@ int main(int argc, char *argv[]) {
      *
      */
 
-    const std::vector<data_type> A = {1.0, 2.0, 3.0, 2.0, 5.0, 5.0, 3.0, 5.0, 12.0};
-    const std::vector<data_type> B = {1.0, 2.0, 3.0};
+    //const std::vector<data_type> A = {1.0, 2.0, 3.0, 2.0, 5.0, 5.0, 3.0, 5.0, 12.0};
+    //const std::vector<data_type> B = {1.0, 2.0, 3.0};
     std::vector<data_type> X(m, 0);
     std::vector<data_type> L(lda * m, 0);
     int info = 0;

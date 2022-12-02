@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     int matrix_dim=get_Matrix_Dim_from_nodes(elementList,elementListLength);
     printf("%d\n",matrix_dim);
     std::vector<float> conductance(matrix_dim*matrix_dim);
-    std::vector<float> currents(matrix_dim*matrix_dim);
+    std::vector<float> currents(matrix_dim);
     elementList_to_Matrix(elementList, elementListLength, conductance, currents, matrix_dim);
     for(int i=0;i<matrix_dim;i++)
     {
@@ -26,9 +26,8 @@ int main(int argc, char *argv[])
     }
     for(int i=0;i<matrix_dim;i++)
     {
-        printf("%f ",currents[i]);
+        printf("%f\n",currents[i]);
     }
-    printf("\n");
     if(elementList)
         delete[] elementList;
     return 0;

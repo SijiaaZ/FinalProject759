@@ -34,10 +34,10 @@ void elementList_to_Matrix(Element* elementList,int elementListLength, std::vect
         {
             currents[elementList[i].Node1]+=elementList[i].value;
             currents[elementList[i].Node2]-=elementList[i].value;
-            if(conductance[row*matrix_dim+col]==0)
-                conductance[row*matrix_dim+col]=(float)1;
-            if(conductance[col*matrix_dim+row]==0)
-                conductance[col*matrix_dim+row]=(float)1;
+            conductance[elementList[i].Node1*matrix_dim+elementList[i].Node1]+=(float)1;
+            conductance[elementList[i].Node2*matrix_dim+elementList[i].Node2]+=(float)1;
+            conductance[row*matrix_dim+col]=(float)(-1);
+            conductance[col*matrix_dim+row]=(float)(-1);
         }
     }
     // if the diagonal is zero, make it one
