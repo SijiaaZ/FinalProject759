@@ -1,9 +1,9 @@
 #include "linear_solver.h"
 void gaussian_elimination(std::vector<float>& conductance_echelon, std::vector<float>& currents_echelon,int matrix_dim)
 {
-    for(int r=0;r<matrix_dim-1;r++)//the row to be deducted
+    for(int r=0;r<matrix_dim-1;r++)//the row to be substracted
     {
-        for (int i=r;i<matrix_dim-1;i++)
+        for (int i=r;i<matrix_dim-1;i++)// the row to be substracted from
         {
             float coefficient=conductance_echelon[(i+1)*matrix_dim+r]/conductance_echelon[r*matrix_dim+r];
             for(int j=r;j<matrix_dim;j++)
@@ -22,7 +22,7 @@ std::vector<float> back_substituition(const std::vector<float> conductance_echel
     {
         for(int c=matrix_dim-1;c>r;c--)
         {
-            currents_echelon[r]-=voltages[r+1]*conductance_echelon[r*matrix_dim+c];
+            currents_echelon[r]-=voltages[c]*conductance_echelon[r*matrix_dim+c];
         }
         voltages[r]=currents_echelon[r]/conductance_echelon[r*matrix_dim+r];
     }

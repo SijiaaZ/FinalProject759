@@ -3,8 +3,9 @@
 #include "linear_solver.h"
 int main(int argc, char *argv[])
 {
+    char* filename=argv[1];
     int elementListLength=0;
-    Element* elementList=parseNetlist("Draft1.txt", elementListLength);
+    Element* elementList=parseNetlist(filename, elementListLength);
     printf("Success:%d\n",elementList==NULL);
     printf("element List Length:%d\n",elementListLength);
     for(int i=0;i<elementListLength;i++)
@@ -33,6 +34,7 @@ int main(int argc, char *argv[])
     std::vector<float> conductance_definite((augmented_matrix_dim-1)*(augmented_matrix_dim-1));
     std::vector<float> currents_definite(augmented_matrix_dim-1);
     augmented_Matrix_to_definite_matrix( elementListLength,  conductance,  currents,  conductance_definite, currents_definite,  augmented_matrix_dim);
+    printf("definite conductane matrix\n");
     for(int i=0;i<matrix_dim;i++)
     {
         for(int j=0;j<matrix_dim;j++)
@@ -44,6 +46,7 @@ int main(int argc, char *argv[])
     
     
     gaussian_elimination(conductance_definite, currents_definite, matrix_dim);
+    printf("conductane matrix after gaussian\n");
     for(int i=0;i<matrix_dim;i++)
     {
         for(int j=0;j<matrix_dim;j++)
@@ -58,8 +61,8 @@ int main(int argc, char *argv[])
         printf("%f\n",currents_definite[i]);
     }
 
-
-
+    printf("=======\n");
+    printf("Result:\n");
     std::vector<float> voltages=back_substituition(conductance_definite, currents_definite, matrix_dim);
     for(int i=0;i<matrix_dim;i++)
     {
