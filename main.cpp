@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 
     int augmented_matrix_dim=get_Matrix_Dim_from_nodes(elementList,elementListLength);
     printf("%d\n",augmented_matrix_dim);
-    std::vector<double> conductance(augmented_matrix_dim*augmented_matrix_dim);
-    std::vector<double> currents(augmented_matrix_dim);
+    std::vector<float> conductance(augmented_matrix_dim*augmented_matrix_dim);
+    std::vector<float> currents(augmented_matrix_dim);
     elementList_to_augmented_Matrix(elementList, elementListLength, conductance, currents, augmented_matrix_dim);
     for(int i=0;i<augmented_matrix_dim;i++)
     {
@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
         printf("%f\n",currents[i]);
     }
     int matrix_dim=augmented_matrix_dim-1;
-    std::vector<double> conductance_definite((augmented_matrix_dim-1)*(augmented_matrix_dim-1));
-    std::vector<double> currents_definite(augmented_matrix_dim-1);
+    std::vector<float> conductance_definite((augmented_matrix_dim-1)*(augmented_matrix_dim-1));
+    std::vector<float> currents_definite(augmented_matrix_dim-1);
     augmented_Matrix_to_definite_matrix( elementListLength,  conductance,  currents,  conductance_definite, currents_definite,  augmented_matrix_dim);
     printf("definite conductane matrix\n");
     for(int i=0;i<matrix_dim;i++)
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
     printf("=======\n");
     printf("Result:\n");
-    std::vector<double> voltages=back_substituition(conductance_definite, currents_definite, matrix_dim);
+    std::vector<float> voltages=back_substituition(conductance_definite, currents_definite, matrix_dim);
     for(int i=0;i<matrix_dim;i++)
     {
         printf("%f\n",voltages[i]);

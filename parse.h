@@ -15,10 +15,9 @@ struct Element
     char elementName;
     int Node1;
     int Node2;
-    float value;
+    double value;
 };
 
-typedef struct Element Element;
 // parseNetlist
 // if failed, return NULL, if success return the element array address
 // the returned address need to be freed and deleted

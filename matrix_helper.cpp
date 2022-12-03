@@ -15,7 +15,7 @@ int get_Matrix_Dim_from_nodes(Element* elementList,int elementListLength)
 
 //the input argument conductance matrix should be all zeros
 //the input argument currents column matrix should be all zeros
-void elementList_to_augmented_Matrix(Element* elementList,int elementListLength, std::vector<float>& conductance, std::vector<float>& currents, int matrix_dim)
+void elementList_to_augmented_Matrix(Element* elementList,int elementListLength, std::vector<double>& conductance, std::vector<double>& currents, int matrix_dim)
 {
 
     for(int i=0;i<elementListLength;i++)
@@ -41,13 +41,13 @@ void elementList_to_augmented_Matrix(Element* elementList,int elementListLength,
     {
         if(conductance[i*matrix_dim+i]==0)
         {
-            conductance[i*matrix_dim+i]=(float)1;
+            conductance[i*matrix_dim+i]=(double)1;
         }
     }
 }
 
 
-void augmented_Matrix_to_definite_matrix(int elementListLength, const std::vector<float> conductance, const std::vector<float> currents, std::vector<float>& conductance_definite, std::vector<float>& currents_definite, int augmented_matrix_dim)
+void augmented_Matrix_to_definite_matrix(int elementListLength, const std::vector<double> conductance, const std::vector<double> currents, std::vector<double>& conductance_definite, std::vector<double>& currents_definite, int augmented_matrix_dim)
 {
     for(int i=1;i<augmented_matrix_dim;i++)
     {

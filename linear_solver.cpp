@@ -1,11 +1,11 @@
 #include "linear_solver.h"
-void gaussian_elimination(std::vector<float>& conductance_echelon, std::vector<float>& currents_echelon,int matrix_dim)
+void gaussian_elimination(std::vector<double>& conductance_echelon, std::vector<double>& currents_echelon,int matrix_dim)
 {
     for(int r=0;r<matrix_dim-1;r++)//the row to be substracted
     {
         for (int i=r;i<matrix_dim-1;i++)// the row to be substracted from
         {
-            float coefficient=conductance_echelon[(i+1)*matrix_dim+r]/conductance_echelon[r*matrix_dim+r];
+            double coefficient=conductance_echelon[(i+1)*matrix_dim+r]/conductance_echelon[r*matrix_dim+r];
             for(int j=r;j<matrix_dim;j++)
             {
                 conductance_echelon[(i+1)*matrix_dim+j]-=coefficient*conductance_echelon[r*matrix_dim+j];
@@ -15,9 +15,9 @@ void gaussian_elimination(std::vector<float>& conductance_echelon, std::vector<f
     }
 }
 
-std::vector<float> back_substituition(const std::vector<float> conductance_echelon, std::vector<float>& currents_echelon,int matrix_dim)
+std::vector<double> back_substituition(const std::vector<double> conductance_echelon, std::vector<double>& currents_echelon,int matrix_dim)
 {
-    std::vector<float> voltages(matrix_dim);
+    std::vector<double> voltages(matrix_dim);
     for(int r=matrix_dim-1;r>=0;r--)//row to be solved
     {
         for(int c=matrix_dim-1;c>r;c--)

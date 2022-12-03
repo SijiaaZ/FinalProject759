@@ -6,13 +6,13 @@ Element* parseNetlist(const char* filepath, int & elementListLength)
     
     elementListLength=0;
 
-    int numlines=20;
-    // std::ifstream inFileUnused(filepath);
-    // std::string unused;
-    // while ( std::getline(inFileUnused, unused) )
-    //     numlines++;
-    // printf("numlines:%d\n",numlines);
-    // inFileUnused.close();
+    int numlines=0;
+    std::ifstream inFileUnused(filepath);
+    std::string unused;
+    while ( std::getline(inFileUnused, unused) )
+        numlines++;
+    printf("numlines:%d\n",numlines);
+    inFileUnused.close();
 
     Element* elementList=new Element[numlines];
 
@@ -78,7 +78,7 @@ int parseElement(char* line, Element& element)
                     break;
 
                 case 3:
-                    element.value=float(std::atoi(tok));
+                    element.value=std::stod(tok);
                 default:
                     break;
             }
