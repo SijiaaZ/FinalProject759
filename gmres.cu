@@ -1,5 +1,6 @@
 #include "gmres.h"
 #include <cuda.h>
+
 void cublasCheck(cublasStatus_t stat, const char* function_name)
 {
     //printf("%s\n",function_name);
@@ -7,15 +8,35 @@ void cublasCheck(cublasStatus_t stat, const char* function_name)
         printf("%s failed\n",function_name);
 }
 
+//k is zero based, the target column index
+__global__ void rotate_Hessenberg(double* h, double* cs, double* sn, const int k)
+{
+    double temp=0;
 
+    int i=threadIdx.x + blockIdx.x * blockDim.x;
+
+    temp   =  cs[i] * h[i] + sn[i] * h[i+1];
+    h[i+1] = -sn[i] * h[i] + cs[i] * h[i + 1];
+    h[i]   = temp;
+    
+}
+
+void next_sin_cos(double v1,double v2, double* cs, double* sn)
+{
+    double t = sqrt(v1*v1 + v2*v2);
+
+    *cs = v1 / t;
+    *sn = v2 /t;
+
+}
 
 __global__ void element_append_vector(double* h, int k, double value)
 {
     //printf("element_append_vector\n");
     h[k+1]=value;
 }
-
-void GMRES(cublasHandle_t handle,const double* A, double*b, double* x, double* Q, double* H,const int matrix_dim,cudaStream_t stream_id)
+// Adapt based on: https://en.wikipedia.org/wiki/Generalized_minimal_residual_method
+void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*b, double* x, double* Q, double* H,const int matrix_dim,const int max_iterations, const double threshold)
 {
     cublasStatus_t cudaStat;
     cudaStat=cublasSetStream(handle, stream_id);
@@ -26,6 +47,20 @@ void GMRES(cublasHandle_t handle,const double* A, double*b, double* x, double* Q
     double *r;
     cudaMallocManaged(&r, sizeof(double) * matrix_dim);
     cudaMemcpy(r,b,sizeof(double) *matrix_dim,cudaMemcpyDefault);
+
+    double *cs;//may need to be initialized to zero
+    cudaMallocManaged(&cs, sizeof(double) * max_iterations);
+
+    double *sn;//may need to be initialized to zero
+    cudaMallocManaged(&sn, sizeof(double) * max_iterations);
+
+    double* e1;//may need to be initialized to zero
+    cudaMallocManaged(&e1, sizeof(double) * (max_iterations+1));
+    e1[0]=1;
+
+    double* beta_r;//may need to be initialized to zero
+    cudaMallocManaged(&beta_r, sizeof(double) * (max_iterations+1));
+    beta_r[0]=1;
 
     //r=b-A*x;
     cudaStat=cublasDgemv(handle, CUBLAS_OP_N,
@@ -44,6 +79,17 @@ void GMRES(cublasHandle_t handle,const double* A, double*b, double* x, double* Q
                             r, 1, &r_norm);//probably blocking to make sure the correct r_norm is on the host
     cublasCheck(cudaStat,"cublasDnrm2");
 
+    double b_norm=0;
+    cudaStat = cublasDnrm2( handle, matrix_dim,
+                            r, 1, &b_norm);//probably blocking to make sure the correct r_norm is on the host
+    cublasCheck(cudaStat,"cublasDnrm2");
+
+    double error;
+    if(b_norm!=0)
+    {
+        error=r_norm/b_norm;
+    }
+
     double r_norm_reciprocal=0;//r_norm_reciprocal is on the host memory
     if(r_norm!=0)
     {
@@ -55,13 +101,51 @@ void GMRES(cublasHandle_t handle,const double* A, double*b, double* x, double* Q
                             &r_norm_reciprocal,
                             r, 1);
     cublasCheck(cudaStat,"cublasDscal");
-
     cudaMemcpy(Q,r,sizeof(double) *matrix_dim,cudaMemcpyDefault);
+    //beta = r_norm * e1;
+    beta_r[0] = r_norm * beta_r[0];
 
-    int k=0;
-    arnoldi(handle, A,  Q, H, k, matrix_dim,stream_id);
+    for(int k=0;k<max_iterations;k++)
+    {
+        printf("Q===================\n");
+        for(int i=0;i<matrix_dim;i++)
+        {
+            for(int j=0;j<matrix_dim;j++)
+            {
+                printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
+            }
+            printf("\n");
+        }
+        printf("H===================\n");
+        for(int i=0;i<matrix_dim;i++)
+        {
+            for(int j=0;j<matrix_dim;j++)
+            {
+                printf("%.3f,",H[IDX2C(i,j,matrix_dim)]);
+            }
+            printf("\n");
+        }
+        arnoldi(handle, A,  Q, H, k, matrix_dim,stream_id);
+        rotate_Hessenberg<<<k,1,0,stream_id>>>((double*)(H+k*matrix_dim), cs, sn, k);//assume k<=1024
+        cudaStreamSynchronize(stream_id);
+        next_sin_cos(*(H+k*matrix_dim+k),*(H+k*matrix_dim+k+1), (double*)(cs+k), (double*)(sn+k));
+        *(H+k*matrix_dim+k)=cs[k]*(*(H+k*matrix_dim+k))+sn[k]*(*(H+k*matrix_dim+k+1));
+        *(H+k*matrix_dim+k+1)=0;
+
+        //update the residual vector
+        beta_r[k + 1] = -sn[k] * beta_r[k];
+        beta_r[k]     = cs[k] * beta_r[k];
+        error       = abs(beta_r[k + 1]) / b_norm;
+
+        if(error<=threshold)
+            break;
+    }
 
     cudaFree(r);
+    cudaFree(beta_r);
+    cudaFree(sn);
+    cudaFree(cs);
+    cudaFree(e1);
 }
 
 // A (device) is stored in column-major order, Q (device) is 2D array, Q[i] means Qth column
@@ -146,8 +230,6 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
     //printf("q_norm_reciprocal:%.3f\n",q_norm_reciprocal);
 
     // q = q / h(k + 1);
-    cudaStat=cublasSetStream(handle, stream_id);
-    cublasCheck(cudaStat,"cublasSetStream");
 
     cudaStat = cublasDscal(handle, matrix_dim,
                             &q_norm_reciprocal,
@@ -156,7 +238,7 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
     
 
     cudaMemcpy((double*)(Q+(k+1)*matrix_dim),q,sizeof(double) *matrix_dim,cudaMemcpyDefault);
-    cudaMemcpy((double*)(H+(k+1)*matrix_dim),h,sizeof(double) *matrix_dim,cudaMemcpyDefault);
+    cudaMemcpy((double*)(H+k*matrix_dim),h,sizeof(double) *matrix_dim,cudaMemcpyDefault);
     
    
     cudaFree(q_norm);
