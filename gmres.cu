@@ -2,22 +2,16 @@
 #include <cuda.h>
 void cublasCheck(cublasStatus_t stat, const char* function_name)
 {
-    printf("%s\n",function_name);
+    //printf("%s\n",function_name);
     if(stat!=CUBLAS_STATUS_SUCCESS)
         printf("%s failed\n",function_name);
 }
 
-__global__ void scalar_reciprocal(double* value)
-{
-    printf("scalar reciprocal\n");
-    if(*value!=0)
-    *value=1/(*value);
-}
 
 
 __global__ void element_append_vector(double* h, int k, double value)
 {
-    printf("element_append_vector\n");
+    //printf("element_append_vector\n");
     h[k+1]=value;
 }
 
@@ -45,34 +39,29 @@ void GMRES(cublasHandle_t handle,const double* A, double*b, double* x, double* Q
     cublasCheck(cudaStat,"cublasDgemv");
 
     //r_norm = norm(r);
-    double r_norm=0;
+    double r_norm=0;//r_norm is on the host memory
     cudaStat = cublasDnrm2( handle, matrix_dim,
-                            r, 1, &r_norm);
+                            r, 1, &r_norm);//probably blocking to make sure the correct r_norm is on the host
     cublasCheck(cudaStat,"cublasDnrm2");
 
-    double r_norm_reciprocal=0;
+    double r_norm_reciprocal=0;//r_norm_reciprocal is on the host memory
     if(r_norm!=0)
     {
-        r_norm_reciprocal=1/r_norm;
+        r_norm_reciprocal=1/r_norm;//do on the host
     }
 
     //r = r / r_norm;
     cudaStat = cublasDscal(handle, matrix_dim,
                             &r_norm_reciprocal,
                             r, 1);
-    cublasCheck(cudaStat,"cublasDnrm2");
-    
+    cublasCheck(cudaStat,"cublasDscal");
 
     cudaMemcpy(Q,r,sizeof(double) *matrix_dim,cudaMemcpyDefault);
-    cudaDeviceSynchronize();
 
     int k=0;
     arnoldi(handle, A,  Q, H, k, matrix_dim,stream_id);
-    cudaDeviceSynchronize();
-
 
     cudaFree(r);
-
 }
 
 // A (device) is stored in column-major order, Q (device) is 2D array, Q[i] means Qth column
@@ -106,14 +95,17 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
     cudaMallocManaged(&q_norm, sizeof(double) * 1);
     
     
-    for(int i=0;i<matrix_dim;i++)
-    {
-        for(int j=0;j<matrix_dim;j++)
-        {
-            printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
-        }
-        printf("\n");
-    }
+    // debugging printf
+    // for(int i=0;i<matrix_dim;i++)
+    // {
+    //     for(int j=0;j<matrix_dim;j++)
+    //     {
+    //         printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
+    //     }
+    //     printf("\n");
+    // }
+
+    //q = A*Q(:,k);
     cudaStat=cublasDgemv(handle, CUBLAS_OP_N,
                            matrix_dim, matrix_dim,
                            &alpha,
@@ -121,14 +113,7 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
                            (double*) (Q+k*matrix_dim), 1,
                            &beta,
                            q, 1);
-    cudaDeviceSynchronize();
-    for(int i=0;i<matrix_dim;i++)
-    {
-        printf("%.3f\n",q[i]);
-    }
-    
-
-    cublasCheck(cudaStat,"cublasDgemv");
+    cublasCheck(cudaStat,"cublasDgemv");   
 
     for(int i=0;i<k+1;i++)
     {
@@ -139,15 +124,15 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
                            (double*)(h+i));
                         
         cublasCheck(cudaStat,"cublasDdot");
-        cudaDeviceSynchronize();
-        printf("%.3f\n",*(h+i));
+
+        alpha=-*(h+i);//alpha should be the const in cublasDaxpy so the cudaDeviceSynchronize must be added
         //q = q - h(i) * Q(:, i);
-        alpha=-(*(h+i));
         cudaStat = cublasDaxpy(handle, matrix_dim,
                            &alpha,
                            (double*)(Q+i*matrix_dim), 1,
                            q, 1);
         cublasCheck(cudaStat,"cublasDaxpy");
+
     }
     cudaStat = cublasDnrm2( handle, matrix_dim,
                             q, 1, q_norm);
@@ -155,24 +140,25 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
 
     element_append_vector<<<1,1,0,stream_id>>> (h, k, *q_norm);
 
-    //should be in the same stream as the cublas
-    // q_norm=1/q_norm;
-    scalar_reciprocal<<<1,1,0,stream_id>>> (q_norm);
-    //cudaDeviceSynchronize();
-    //printf("q_norm:%.3f\n",*q_norm);
+
+    //seems there is a copy from device memory to host memory and is blocking
+    double q_norm_reciprocal=1/(*q_norm);
+    //printf("q_norm_reciprocal:%.3f\n",q_norm_reciprocal);
 
     // q = q / h(k + 1);
+    cudaStat=cublasSetStream(handle, stream_id);
+    cublasCheck(cudaStat,"cublasSetStream");
+
     cudaStat = cublasDscal(handle, matrix_dim,
-                            q_norm,
+                            &q_norm_reciprocal,
                             q, 1);
     cublasCheck(cudaStat,"cublasDnrm2");
     
 
-    cudaDeviceSynchronize();
-
     cudaMemcpy((double*)(Q+(k+1)*matrix_dim),q,sizeof(double) *matrix_dim,cudaMemcpyDefault);
     cudaMemcpy((double*)(H+(k+1)*matrix_dim),h,sizeof(double) *matrix_dim,cudaMemcpyDefault);
     
+   
     cudaFree(q_norm);
     cudaFree(q);
     cudaFree(h);

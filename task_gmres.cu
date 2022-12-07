@@ -27,11 +27,6 @@ int main(int argc, char *argv[]) {
     {
         Q[i]=0;
     }
-    std::cout<<Q<<std::endl;
-    std::cout<<(double*) (Q+matrix_dim)<<std::endl;
-    std::cout<<(double*) (Q+matrix_dim)-Q<<std::endl;
-    std::cout<<&Q[matrix_dim]<<std::endl;
-    std::cout<<&Q[matrix_dim]-Q<<std::endl;
 
     double* H;
     cudaMallocManaged(&H, sizeof(double) * matrix_dim * matrix_dim);
