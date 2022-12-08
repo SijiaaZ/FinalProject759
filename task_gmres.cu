@@ -39,38 +39,12 @@ int main(int argc, char *argv[]) {
     cudaMallocManaged(&x, sizeof(double) * matrix_dim );
 
 
-     GMRES(handle,stream1,A, b, x, Q,  H,matrix_dim,4, 0.001);
+    GMRES(handle,stream1,A, b, x, Q,  H,matrix_dim,20, 0.001);
 
 
-    // printf("A===================\n");
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     for(int j=0;j<matrix_dim;j++)
-    //     {
-    //         printf("%.3f,",A[IDX2C(i,j,matrix_dim)]);
-    //     }
-    //     printf("\n");
-    // }
-    // printf("Q===================\n");
+    
 
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     for(int j=0;j<matrix_dim;j++)
-    //     {
-    //         printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
-    //     }
-    //     printf("\n");
-    // }
 
-    // printf("H===================\n");
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     for(int j=0;j<matrix_dim;j++)
-    //     {
-    //         printf("%.3f,",H[IDX2C(i,j,matrix_dim)]);
-    //     }
-    //     printf("\n");
-    // }
 
 
     

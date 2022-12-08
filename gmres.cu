@@ -8,16 +8,17 @@ void cublasCheck(cublasStatus_t stat, const char* function_name)
         printf("%s failed\n",function_name);
 }
 
-//k is zero based, the target column index
-__global__ void rotate_Hessenberg(double* h, double* cs, double* sn, const int k)
+//k is zero based, the target column index, k+1
+void rotate_Hessenberg(double* h, double* cs, double* sn, const int k)
 {
     double temp=0;
 
-    int i=threadIdx.x + blockIdx.x * blockDim.x;
-
-    temp   =  cs[i] * h[i] + sn[i] * h[i+1];
-    h[i+1] = -sn[i] * h[i] + cs[i] * h[i + 1];
-    h[i]   = temp;
+    for(int i=0;i<k;i++)
+    {   
+        temp   =  cs[i] * h[i] + sn[i] * h[i + 1];
+        h[i+1] = -sn[i] * h[i] + cs[i] * h[i + 1];
+        h[i]   = temp;
+    }
     
 }
 
@@ -30,6 +31,19 @@ void next_sin_cos(double v1,double v2, double* cs, double* sn)
 
 }
 
+//A is a square matrix, column based
+// change the reading sequence
+void back_substituition(const double* A, double *b,int matrix_dim, double *x, int lda)
+{
+    for(int r=matrix_dim-1;r>=0;r--)//row to be solved
+    {
+        for(int c=matrix_dim-1;c>r;c--)
+        {
+            b[r]-=x[c]*A[IDX2C(r,c,lda)];
+        }
+        x[r]=b[r]/A[IDX2C(r,r,lda)];
+    }
+}
 __global__ void element_append_vector(double* h, int k, double value)
 {
     //printf("element_append_vector\n");
@@ -104,29 +118,12 @@ void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*
     cudaMemcpy(Q,r,sizeof(double) *matrix_dim,cudaMemcpyDefault);
     //beta = r_norm * e1;
     beta_r[0] = r_norm * beta_r[0];
-
+    int k_record=0;
     for(int k=0;k<max_iterations;k++)
     {
-        printf("Q===================\n");
-        for(int i=0;i<matrix_dim;i++)
-        {
-            for(int j=0;j<matrix_dim;j++)
-            {
-                printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
-            }
-            printf("\n");
-        }
-        printf("H===================\n");
-        for(int i=0;i<matrix_dim;i++)
-        {
-            for(int j=0;j<matrix_dim;j++)
-            {
-                printf("%.3f,",H[IDX2C(i,j,matrix_dim)]);
-            }
-            printf("\n");
-        }
+        k_record=k;
         arnoldi(handle, A,  Q, H, k, matrix_dim,stream_id);
-        rotate_Hessenberg<<<k,1,0,stream_id>>>((double*)(H+k*matrix_dim), cs, sn, k);//assume k<=1024
+        rotate_Hessenberg((double*)(H+k*matrix_dim), cs, sn, k);//assume k<=1024
         cudaStreamSynchronize(stream_id);
         next_sin_cos(*(H+k*matrix_dim+k),*(H+k*matrix_dim+k+1), (double*)(cs+k), (double*)(sn+k));
         *(H+k*matrix_dim+k)=cs[k]*(*(H+k*matrix_dim+k))+sn[k]*(*(H+k*matrix_dim+k+1));
@@ -141,11 +138,68 @@ void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*
             break;
     }
 
+    printf("Q===================\n");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            printf("%.3f,",Q[IDX2C(i,j,matrix_dim)]);
+        }
+        printf("\n");
+    }
+    printf("H===================\n");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            printf("%.3f,",H[IDX2C(i,j,matrix_dim)]);
+        }
+        printf("\n");
+    }
+
+    printf("beta===============\n");
+    for(int i=0;i<=k_record+1;i++)
+    {
+        printf("%.3f\n",beta_r[i]);
+    }
+
+
+    double *y;
+    cudaMallocManaged(&y, sizeof(double)*(k_record+1));
+    back_substituition(H, beta_r,k_record+1, y,matrix_dim);
+
+    printf("y==============\n");
+    for(int i=0;i<k_record+1;i++)
+    {
+        printf("%.3f\n",y[i]);
+    }
+
+    //x = x + Q(:, 1:k) * y;
+    alpha=1;
+    beta=1;
+    cudaStat = cublasDgemv(handle, CUBLAS_OP_N,
+                           matrix_dim, k_record+1,
+                           &alpha,
+                           Q, matrix_dim,
+                           y, 1,
+                           &beta,
+                           x, 1);
+    cublasCheck(cudaStat,"cublasDgemv");
+    cudaDeviceSynchronize();
+
+    printf("x===================\n");
+    for(int i=0;i<matrix_dim;i++) 
+    {
+        printf("%.3f\n",x[i]);
+
+    }
+
     cudaFree(r);
     cudaFree(beta_r);
     cudaFree(sn);
     cudaFree(cs);
     cudaFree(e1);
+    cudaFree(y);
 }
 
 // A (device) is stored in column-major order, Q (device) is 2D array, Q[i] means Qth column
