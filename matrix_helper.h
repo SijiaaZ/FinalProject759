@@ -1,8 +1,11 @@
 #ifndef matrix_helper_h
 #define matrix_helper_h
 #include <vector>
+#include <random>
+#include <stdlib.h>
 #include "parse.h"
 #define probability 7
+void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Element* elementList);
 int get_Matrix_Dim_from_nodes(Element* elementList,int elementListLength);
 void elementList_to_augmented_Matrix( Element* elementList,int elementListLength, std::vector<double>& conductance, std::vector<double>& currents, int matrix_dim);
 void elementList_to_augmented_Matrix( Element* elementList,int elementListLength,  double* conductance,  double* currents, int matrix_dim);
