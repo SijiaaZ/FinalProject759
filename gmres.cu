@@ -44,11 +44,11 @@ void back_substituition(const double* A, double *b,int matrix_dim, double *x, in
         x[r]=b[r]/A[IDX2C(r,r,lda)];
     }
 }
-__global__ void element_append_vector(double* h, int k, double value)
-{
-    //printf("element_append_vector\n");
-    h[k+1]=value;
-}
+// __global__ void element_append_vector(double* h, int k, double value)
+// {
+//     //printf("element_append_vector\n");
+//     h[k+1]=value;
+// }
 // Adapt based on: https://en.wikipedia.org/wiki/Generalized_minimal_residual_method
 void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*b, double* x, double* Q, double* H,const int matrix_dim,const int max_iterations, const double threshold)
 {
@@ -275,8 +275,7 @@ void arnoldi(cublasHandle_t handle,const double* A, double* Q, double *H, const 
     cudaStat = cublasDnrm2( handle, matrix_dim,
                             q, 1, q_norm);
     cublasCheck(cudaStat,"cublasDnrm2");
-
-    element_append_vector<<<1,1,0,stream_id>>> (h, k, *q_norm);
+    cudaMemcpy((double*)(h+k+1),q_norm,sizeof(double)*1,cudaMemcpyDefault);
 
 
     //seems there is a copy from device memory to host memory and is blocking
