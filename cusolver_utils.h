@@ -190,7 +190,7 @@ template <> void print_matrix(const int &m, const int &n, const float *A, const 
 template <> void print_matrix(const int &m, const int &n, const double *A, const int &lda) {
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
-            std::printf("%0.2f ", A[j * lda + i]);
+            std::printf("%.3f,", A[j * lda + i]);
         }
         std::printf("\n");
     }

@@ -44,13 +44,21 @@ void back_substituition(const double* A, double *b,int matrix_dim, double *x, in
         x[r]=b[r]/A[IDX2C(r,r,lda)];
     }
 }
-// __global__ void element_append_vector(double* h, int k, double value)
-// {
-//     //printf("element_append_vector\n");
-//     h[k+1]=value;
-// }
+__global__ void precondition(double* A,double*b,int matrix_dim)
+{
+    int tx = blockDim.x*blockIdx.x+threadIdx.x;
+    int ty = blockDim.x*blockIdx.x+threadIdx.y;
+    if(tx>=matrix_dim||ty>=matrix_dim)
+        return;
+    if(ty==0)
+        b[tx]=b[tx]/A[IDX2C(tx,tx,matrix_dim)];
+    __syncthreads();
+    A[IDX2C(tx,ty,matrix_dim)]=A[IDX2C(tx,ty,matrix_dim)]/A[IDX2C(tx,tx,matrix_dim)];
+
+}
+
 // Adapt based on: https://en.wikipedia.org/wiki/Generalized_minimal_residual_method
-void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*b, double* x, double* Q, double* H,const int matrix_dim,const int max_iterations, const double threshold)
+void GMRES(cublasHandle_t handle,cudaStream_t stream_id, double* A, double*b, double* x, double* Q, double* H,const int matrix_dim,const int max_iterations, const double threshold)
 {
     cublasStatus_t cudaStat;
     cudaStat=cublasSetStream(handle, stream_id);
@@ -75,6 +83,30 @@ void GMRES(cublasHandle_t handle,cudaStream_t stream_id,const double* A, double*
     double* beta_r;//may need to be initialized to zero
     cudaMallocManaged(&beta_r, sizeof(double) * (max_iterations+1));
     beta_r[0]=1;
+
+    int threads_per_block=1024;
+    int blocks_per_grid=(matrix_dim*matrix_dim+threads_per_block-1)/threads_per_block;
+    dim3 dimGrid(blocks_per_grid); // one-dimensional grid
+    dim3 dimBlock(32,32);
+
+    precondition<<<dimGrid,dimBlock,0,stream_id>>>(A,b,matrix_dim);
+
+    printf("A===================\n");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            printf("%.3f,",A[IDX2C(i,j,matrix_dim)]);
+        }
+        printf("\n");
+    }
+
+    printf("b=================\n");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        printf("%.3f\n",b[i]);
+    }
+
 
     //r=b-A*x;
     cudaStat=cublasDgemv(handle, CUBLAS_OP_N,
