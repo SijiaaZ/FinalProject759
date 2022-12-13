@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     fclose(fp);
 
     double* csrValA=new double[matrix_dim*matrix_dim];
-    int* csrRowptrA=new int[matrix_dim]();
+    int* csrRowptrA=new int[matrix_dim+1]();
     int* csrColIndA=new int[matrix_dim*matrix_dim];
     int nonzeroNums=Dense_to_row_major_CSR(matrix_dim,conductance_definite,csrValA, csrRowptrA,csrColIndA);
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         fprintf(fp_0,"%f,%d\n",csrValA[i],csrColIndA[i]);
         //printf("%f,%d\n",csrValA[nonzeroNums],csrColIndA[nonzeroNums]);
     }
-    for(int i=0;i<matrix_dim;i++)
+    for(int i=0;i<matrix_dim+1;i++)
     {
         fprintf(fp_0,"%d\n",csrRowptrA[i]);
     }

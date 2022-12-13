@@ -206,5 +206,6 @@ int Dense_to_row_major_CSR(int matrix_dim,const double* A,double* csrValA, int* 
             numzerosNum++;
         }
     }
+    csrRowptrA[matrix_dim]=numzerosNum;
     return numzerosNum;
 }
