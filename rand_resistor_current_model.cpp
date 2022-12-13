@@ -28,17 +28,42 @@ int main(int argc, char *argv[])
     // need to change to the column majored?
     elementList_to_augmented_Matrix(elementList, elementNum, conductance, currents, augmented_matrix_dim);
     augmented_Matrix_to_definite_matrix( elementNum,  conductance,  currents,  conductance_definite, currents_definite,  augmented_matrix_dim);
-    // FILE * fp;
-    // fp = fopen ("rand_matrix.out", "w");
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     for(int j=0;j<matrix_dim;j++)
-    //     {
-    //         fprintf(fp,"%f,",conductance_definite[i*matrix_dim+j]);
-    //     }
-    //     fprintf(fp,"\n");
-    // }
-    // fclose(fp);
+    
+    
+    FILE * fp;
+    fp = fopen ("rand_matrix.out", "w");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            fprintf(fp,"%f,",conductance_definite[i*matrix_dim+j]);
+        }
+        fprintf(fp,"\n");
+    }
+    fclose(fp);
+
+    double* csrValA=new double[matrix_dim*matrix_dim];
+    int* csrRowptrA=new int[matrix_dim]();
+    int* csrColIndA=new int[matrix_dim*matrix_dim];
+    int nonzeroNums=Dense_to_row_major_CSR(matrix_dim,conductance_definite,csrValA, csrRowptrA,csrColIndA);
+
+    FILE * fp_0;
+    fp_0 = fopen ("rand_matrix_CSR.out", "w");
+    for(int i=0;i<nonzeroNums;i++)
+    {
+        fprintf(fp_0,"%f,%d\n",csrValA[i],csrColIndA[i]);
+        //printf("%f,%d\n",csrValA[nonzeroNums],csrColIndA[nonzeroNums]);
+    }
+    for(int i=0;i<matrix_dim;i++)
+    {
+        fprintf(fp_0,"%d\n",csrRowptrA[i]);
+    }
+    fclose(fp_0);
+
+    delete []csrValA;
+    delete []csrRowptrA;
+    delete []csrColIndA;
+
     gaussian_elimination(conductance_definite, currents_definite, matrix_dim);
 
     double* voltages=new double[matrix_dim];

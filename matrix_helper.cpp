@@ -187,3 +187,24 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
 }
 
 
+// return the number of non zero elements
+int Dense_to_row_major_CSR(int matrix_dim,const double* A,double* csrValA, int* csrRowptrA,int* csrColIndA)
+{
+    int numzerosNum=0;
+    for(int i=0;i<matrix_dim;i++)
+    {
+        csrRowptrA[i]=matrix_dim;
+        for(int j=0;j<matrix_dim;j++)
+        {
+            if(A[i*matrix_dim+j]==0)
+                continue;
+            
+            csrRowptrA[i]=(j<csrRowptrA[i])?j:csrRowptrA[i];// the first non zero index in the ith row
+            csrValA[numzerosNum]=A[i*matrix_dim+j];
+            csrColIndA[numzerosNum]=j;
+            //printf("%d,%f,%d,%d\n",numzerosNum,csrValA[numzerosNum],csrColIndA[numzerosNum],csrRowptrA[i]);
+            numzerosNum++;
+        }
+    }
+    return numzerosNum;
+}

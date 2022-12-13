@@ -11,5 +11,7 @@ void elementList_to_augmented_Matrix( Element* elementList,int elementListLength
 void elementList_to_augmented_Matrix( Element* elementList,int elementListLength,  double* conductance,  double* currents, int matrix_dim);
 void augmented_Matrix_to_definite_matrix(int elementListLength, const std::vector<double> conductance, const std::vector<double> currents, std::vector<double>& conductance_definite, std::vector<double>& currents_definite, int augmented_matrix_dim);
 void augmented_Matrix_to_definite_matrix(int elementListLength, const double* conductance, const double* currents, double* conductance_definite, double* currents_definite, int augmented_matrix_dim);
+// return the number of non zero elements
+int Dense_to_row_major_CSR(int matrix_dim,const double* A,double* csrValA, int* csrRowptrA,int* csrColIndA);
 #endif
 
