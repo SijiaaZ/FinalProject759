@@ -30,9 +30,13 @@ void elementList_to_augmented_Matrix(Element* elementList,int elementListLength,
         }
         else if(elementList[i].elementName=='I')
         {
+            
             currents[elementList[i].Node1]-=elementList[i].value;
             currents[elementList[i].Node2]+=elementList[i].value;//flowing in is positive
+            printf("%d,%f,%d,%f\n",elementList[i].Node1,currents[elementList[i].Node1],elementList[i].Node2,currents[elementList[i].Node2]);
         }
+
+
     }
     // if the diagonal is zero, make it one
     for(int i=0;i<matrix_dim;i++)
@@ -129,7 +133,7 @@ void rand_element(Element* elementList, int elementCount,int Node1,int Node2, st
     }
 
 
-    //printf("Name:%c,Node1:%d,Node2:%d,value:%.3f\n",elementList[elementCount].elementName,elementList[elementCount].Node1,elementList[elementCount].Node2,elementList[elementCount].value);
+    printf("Name:%c,Node1:%d,Node2:%d,value:%.3f\n",elementList[elementCount].elementName,elementList[elementCount].Node1,elementList[elementCount].Node2,elementList[elementCount].value);
 }
 
 void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Element* elementList)
@@ -152,13 +156,15 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
         rand_element(elementList, elementCount,Node1,Node2, gen, elementName,current_values,resistor_values);
         // if there is two current sources in serial and there is no branch between them, it is not a valid circuit
         // therefore, always add another branch if there is a current source
+        elementCount++;
         if(elementName=='I')
         {
+            
             int Node2=rand()%nodeNum;
             rand_element(elementList, elementCount,Node1,Node2, gen, 'R',current_values,resistor_values);
             elementCount++;
         }
-        elementCount++;
+        
     }
 
      // connect the head and tail to form the loop
@@ -193,13 +199,16 @@ int Dense_to_row_major_CSR(int matrix_dim,const double* A,double* csrValA, int* 
     int numzerosNum=0;
     for(int i=0;i<matrix_dim;i++)
     {
-        csrRowptrA[i]=matrix_dim;
+        int first_col_num=matrix_dim;
         for(int j=0;j<matrix_dim;j++)
         {
             if(A[i*matrix_dim+j]==0)
                 continue;
-            
-            csrRowptrA[i]=(j<csrRowptrA[i])?j:csrRowptrA[i];// the first non zero index in the ith row
+            if(j<=first_col_num)
+            {
+              first_col_num=j;
+              csrRowptrA[i]=numzerosNum;
+            }
             csrValA[numzerosNum]=A[i*matrix_dim+j];
             csrColIndA[numzerosNum]=j;
             //printf("%d,%f,%d,%d\n",numzerosNum,csrValA[numzerosNum],csrColIndA[numzerosNum],csrRowptrA[i]);
