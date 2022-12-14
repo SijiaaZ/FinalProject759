@@ -33,7 +33,7 @@ void elementList_to_augmented_Matrix(Element* elementList,int elementListLength,
             
             currents[elementList[i].Node1]-=elementList[i].value;
             currents[elementList[i].Node2]+=elementList[i].value;//flowing in is positive
-            printf("%d,%f,%d,%f\n",elementList[i].Node1,currents[elementList[i].Node1],elementList[i].Node2,currents[elementList[i].Node2]);
+            //printf("%f,%d,%f,%d,%f\n",elementList[i].value,elementList[i].Node1,currents[elementList[i].Node1],elementList[i].Node2,currents[elementList[i].Node2]);
         }
 
 
@@ -133,7 +133,7 @@ void rand_element(Element* elementList, int elementCount,int Node1,int Node2, st
     }
 
 
-    printf("Name:%c,Node1:%d,Node2:%d,value:%.3f\n",elementList[elementCount].elementName,elementList[elementCount].Node1,elementList[elementCount].Node2,elementList[elementCount].value);
+    //printf("Name:%c,Node1:%d,Node2:%d,value:%.3f\n",elementList[elementCount].elementName,elementList[elementCount].Node1,elementList[elementCount].Node2,elementList[elementCount].value);
 }
 
 void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Element* elementList)
@@ -147,6 +147,7 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
 
 
     int elementCount=0;
+    bool srcExist=false;
     //To form a big loop
     for(int i=0;i<nodeNum-1;i++)
     {
@@ -159,13 +160,14 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
         elementCount++;
         if(elementName=='I')
         {
-            
+            srcExist=true;
             int Node2=rand()%nodeNum;
             rand_element(elementList, elementCount,Node1,Node2, gen, 'R',current_values,resistor_values);
             elementCount++;
         }
         
     }
+    
 
      // connect the head and tail to form the loop
     rand_element(elementList, elementCount,0,nodeNum-1, gen, 'R',current_values,resistor_values);
@@ -173,6 +175,7 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
     // To add a few branches
     while(elementCount<elementNum)
     {
+        
         int Node1=rand()%nodeNum;
         int Node2=rand()%nodeNum;
         while(Node1==Node2)
@@ -184,6 +187,13 @@ void rand_resistor_circuit_model(const int nodeNum, const int elementNum, Elemen
             int temp=Node1;
             Node1=Node2;
             Node2=temp;
+        }
+        if(!srcExist)
+        {
+          rand_element(elementList, elementCount,Node1,Node2, gen, 'I',current_values,resistor_values);
+          elementCount++;
+          continue;
+          srcExist=true;
         }
         char elementName=(dist_element_choices(gen)>(probability-1))?'I':'R';
         rand_element(elementList, elementCount,Node1,Node2, gen, elementName,current_values,resistor_values);
