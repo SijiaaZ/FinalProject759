@@ -6,14 +6,13 @@
 #include <chrono>
 #include <cusparse.h>
 #include <cuda_runtime.h>
+#include "parse.h"
 
 
 int main(int argc, char *argv[]) {
-    int nodeNum=std::atoi(argv[1]);
-    printf("%d\n",nodeNum);
-    int elementNum=(int)nodeNum*1.8;
-    Element* elementList=new Element[elementNum];
-    rand_resistor_circuit_model(nodeNum, elementNum, elementList);
+    char* filename=argv[1];
+    int elementNum=0;
+    Element* elementList=parseNetlist(filename, elementNum);
     int augmented_matrix_dim=get_Matrix_Dim_from_nodes(elementList,elementNum);
 
     int matrix_dim=augmented_matrix_dim-1;
@@ -110,7 +109,7 @@ int main(int argc, char *argv[]) {
     printf("%f\n", duration_sec.count());
 
     FILE * fp_Result_3;
-    fp_Result_3 = fopen ("rand_matrix_result_GMRES_CSR.out", "w");
+    fp_Result_3 = fopen ("SPICE_result_GMRES_CSR.out", "w");
     for(int i=0;i<matrix_dim;i++)
     {
         fprintf(fp_Result_3,"%.3f\n",x[i]);

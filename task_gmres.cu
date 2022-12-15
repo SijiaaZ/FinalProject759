@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <vector>
 #include <chrono>
+#include <string>
 
 #include "parse.h"
 #include "matrix_helper.h"
@@ -9,7 +10,7 @@
 #include "gmres.h"
 
 int main(int argc, char *argv[]) {
-
+    
     int nodeNum=std::atoi(argv[1]);
     printf("%d\n",nodeNum);
     int elementNum=(int)nodeNum*1.8;
@@ -28,23 +29,25 @@ int main(int argc, char *argv[]) {
     // need to change to the column majored
     elementList_to_augmented_Matrix(elementList, elementNum, conductance, currents, augmented_matrix_dim);
     augmented_Matrix_to_definite_matrix( elementNum,  conductance,  currents,  conductance_definite, currents_definite,  augmented_matrix_dim);
-    // FILE * fp;
-    // fp = fopen ("rand_matrix.out", "w");
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     for(int j=0;j<matrix_dim;j++)
-    //     {
-    //         fprintf(fp,"%f,",conductance_definite[i*matrix_dim+j]);
-    //     }
-    //     fprintf(fp,"\n");
-    // }
+    delete []elementList;
+    
+    FILE * fp;
+    fp = fopen ("rand_matrix.out", "w");
+    for(int i=0;i<matrix_dim;i++)
+    {
+        for(int j=0;j<matrix_dim;j++)
+        {
+            fprintf(fp,"%f,",conductance_definite[i*matrix_dim+j]);
+        }
+        fprintf(fp,"\n");
+    }
 
-    // for(int i=0;i<matrix_dim;i++)
-    // {
-    //     fprintf(fp,"%f,",currents_definite[i]);
-    // }
-    // fprintf(fp,"\n");
-    // fclose(fp);
+    for(int i=0;i<matrix_dim;i++)
+    {
+        fprintf(fp,"%f,",currents_definite[i]);
+    }
+    fprintf(fp,"\n");
+    fclose(fp);
     // GMRES
     cudaStream_t stream1;
     cudaStreamCreate(&stream1);
@@ -99,7 +102,7 @@ int main(int argc, char *argv[]) {
     printf("%f\n", duration_sec.count());
 
     FILE * fp_Result_3;
-    fp_Result_3 = fopen ("rand_matrix_result_GMRES_CPU_GPU.out", "w");
+    fp_Result_3 = fopen ("rand_matrix_result_GMRES_dense.out", "w");
     for(int i=0;i<matrix_dim;i++)
     {
         fprintf(fp_Result_3,"%.3f\n",x[i]);
@@ -118,7 +121,6 @@ int main(int argc, char *argv[]) {
 
     delete []conductance_definite;
     delete []currents_definite;
-    delete []elementList;
     delete []conductance;
     delete []currents;
 
