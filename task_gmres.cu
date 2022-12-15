@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     elementList_to_augmented_Matrix(elementList, elementNum, conductance, currents, augmented_matrix_dim);
     augmented_Matrix_to_definite_matrix( elementNum,  conductance,  currents,  conductance_definite, currents_definite,  augmented_matrix_dim);
     delete []elementList;
-    
+
     FILE * fp;
     fp = fopen ("rand_matrix.out", "w");
     for(int i=0;i<matrix_dim;i++)
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     printf("%f\n", duration_sec.count());
 
     FILE * fp_Result_3;
-    fp_Result_3 = fopen ("rand_matrix_result_GMRES_dense.out", "w");
+    fp_Result_3 = fopen ("nodal_voltages.out", "w");
     for(int i=0;i<matrix_dim;i++)
     {
         fprintf(fp_Result_3,"%.3f\n",x[i]);

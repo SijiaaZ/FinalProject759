@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     printf("%f\n", duration_sec.count());
 
     FILE * fp_Result_3;
-    fp_Result_3 = fopen ("SPICE_result_GMRES_CSR.out", "w");
+    fp_Result_3 = fopen ("nodal_voltages.out", "w");
     for(int i=0;i<matrix_dim;i++)
     {
         fprintf(fp_Result_3,"%.3f\n",x[i]);
