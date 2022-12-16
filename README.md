@@ -6,12 +6,21 @@ GPU parallel implementation of GMRES for circuit simulation
 
 ## Deliverables:
 Code structure:
-Parse.h: the functions to parse the SPICE netlist files and create an array of struct elementlist
-Matrix_helper.h: construct circuit matrices from an array of struct elementlist; randomly generate an array of elementlist; convert dense matrix format to CSR matrix format
-gmres.h: all functions related to dense format and CSR format gmres implementation
-task_gmres.cu: dense format GMRES with a random matrix 
-task_gmres_CSR.cu: CSR format GMRES with a random matrix 
-task_gmres_CSR-spice.cu: CSR format GMRES with the SPICE netlist file 
+Parse.h: 
+	the functions to parse the SPICE netlist files and create an array of struct elementlist
+Matrix_helper.h: 
+	construct circuit matrices from an array of struct elementlist. 
+	randomly generate an array of elementlist.
+	convert dense matrix format to CSR matrix format. 
+gmres.h: 
+	all functions related to dense format and CSR format gmres implementation
+task_gmres.cu: 
+	dense format GMRES with a random matrix 
+task_gmres_CSR.cu: 
+	CSR format GMRES with a random matrix 
+task_gmres_CSR-spice.cu: 
+	CSR format GMRES with the SPICE netlist file as the input
+
 
 Input files:
 Draft1.txt Draft2.txt Draft3.txt (SPICE netlists) or randomly generated circuit matrices
